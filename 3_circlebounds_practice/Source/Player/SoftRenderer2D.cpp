@@ -3,21 +3,21 @@
 #include "SoftRenderer.h"
 using namespace CK::DD;
 
-// ±×¸®µå ±×¸®±â
+// ê·¸ë¦¬ë“œ ê·¸ë¦¬ê¸°
 void SoftRenderer::DrawGrid2D()
 {
-	// ±×¸®µå »ö»ó
+	// ê·¸ë¦¬ë“œ ìƒ‰ìƒ
 	LinearColor gridColor(LinearColor(0.8f, 0.8f, 0.8f, 0.3f));
 
-	// ºäÀÇ ¿µ¿ª °è»ê
+	// ë·°ì˜ ì˜ì—­ ê³„ì‚°
 	Vector2 viewPos = _GameEngine.GetCamera().GetTransform().GetPosition();
 	Vector2 extent = Vector2(_ScreenSize.X * 0.5f, _ScreenSize.Y * 0.5f);
 
-	// ÁÂÃø ÇÏ´Ü¿¡¼­ºÎÅÍ °İÀÚ ±×¸®±â
+	// ì¢Œì¸¡ í•˜ë‹¨ì—ì„œë¶€í„° ê²©ì ê·¸ë¦¬ê¸°
 	int xGridCount = _ScreenSize.X / _Grid2DUnit;
 	int yGridCount = _ScreenSize.Y / _Grid2DUnit;
 
-	// ±×¸®µå°¡ ½ÃÀÛµÇ´Â ÁÂÇÏ´Ü ÁÂÇ¥ °ª °è»ê
+	// ê·¸ë¦¬ë“œê°€ ì‹œì‘ë˜ëŠ” ì¢Œí•˜ë‹¨ ì¢Œí‘œ ê°’ ê³„ì‚°
 	Vector2 minPos = viewPos - extent;
 	Vector2 minGridPos = Vector2(ceilf(minPos.X / (float)_Grid2DUnit), ceilf(minPos.Y / (float)_Grid2DUnit)) * (float)_Grid2DUnit;
 	ScreenPoint gridBottomLeft = ScreenPoint::ToScreenCoordinate(_ScreenSize, minGridPos - viewPos);
@@ -32,25 +32,25 @@ void SoftRenderer::DrawGrid2D()
 		_RSI->DrawFullHorizontalLine(gridBottomLeft.Y - iy * _Grid2DUnit, gridColor);
 	}
 
-	// ¿ùµåÀÇ ¿øÁ¡
+	// ì›”ë“œì˜ ì›ì 
 	ScreenPoint worldOrigin = ScreenPoint::ToScreenCoordinate(_ScreenSize, -viewPos);
 	_RSI->DrawFullHorizontalLine(worldOrigin.Y, LinearColor::Red);
 	_RSI->DrawFullVerticalLine(worldOrigin.X, LinearColor::Green);
 }
 
 
-// °ÔÀÓ ·ÎÁ÷
+// ê²Œì„ ë¡œì§
 void SoftRenderer::Update2D(float InDeltaSeconds)
 {
 	static float moveSpeed = 100.f;
 
 	InputManager input = _GameEngine.GetInputManager();
 
-	// ÇÃ·¹ÀÌ¾î °ÔÀÓ ¿ÀºêÁ§Æ®ÀÇ Æ®·£½ºÆû
+	// í”Œë ˆì´ì–´ ê²Œì„ ì˜¤ë¸Œì íŠ¸ì˜ íŠ¸ëœìŠ¤í¼
 	Transform& playerTransform = _GameEngine.FindGameObject(GameEngine::PlayerKey).GetTransform();
 	playerTransform.AddPosition(Vector2(input.GetXAxis(), input.GetYAxis()) * moveSpeed * InDeltaSeconds);
 
-	// ÇÃ·¹ÀÌ¾î¸¦ µû¶ó´Ù´Ï´Â Ä«¸Ş¶óÀÇ Æ®·£½ºÆû
+	// í”Œë ˆì´ì–´ë¥¼ ë”°ë¼ë‹¤ë‹ˆëŠ” ì¹´ë©”ë¼ì˜ íŠ¸ëœìŠ¤í¼
 	static float thresholdDistance = 1.f;
 	Transform& cameraTransform = _GameEngine.GetCamera().GetTransform();
 	Vector2 playerPosition = playerTransform.GetPosition();
@@ -69,29 +69,29 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 	}
 }
 
-// ·»´õ¸µ ·ÎÁ÷
+// ë Œë”ë§ ë¡œì§
 void SoftRenderer::Render2D()
 {
-	// °İÀÚ ±×¸®±â
+	// ê²©ì ê·¸ë¦¬ê¸°
 	DrawGrid2D();
 
-	// Ä«¸Ş¶óÀÇ ºä Çà·Ä
+	// ì¹´ë©”ë¼ì˜ ë·° í–‰ë ¬
 	Matrix3x3 viewMat = _GameEngine.GetCamera().GetViewMatrix();
 
-	// ÀüÃ¼ ±×¸± ¹°Ã¼ÀÇ ¼ö
+	// ì „ì²´ ê·¸ë¦´ ë¬¼ì²´ì˜ ìˆ˜
 	size_t totalObjectCount = _GameEngine.GetGameObject().size();
 	size_t culledObjectCount = 0;
 	size_t culledObjectCountRect = 0;
 	size_t renderingObjectCount = 0;
 
-	// Ä«¸Ş¶óÀÇ ÇöÀç ¿ø ¹Ù¿îµù
+	// ì¹´ë©”ë¼ì˜ í˜„ì¬ ì› ë°”ìš´ë”©
 	Circle cameraCircleBound(_GameEngine.GetCamera().GetCircleBound());
 	CK::Rectangle cameraRectangleBound(_GameEngine.GetCamera().GetRectangleBound());
 
-	// ÀÇµµÀûÀ¸·Î Âª°Ô ¼³Á¤
+	// ì˜ë„ì ìœ¼ë¡œ ì§§ê²Œ ì„¤ì •
 	//cameraCircleBound.Radius = 250.f;
 
-	// ·£´ıÇÏ°Ô »ı¼ºµÈ ¸ğµç °ÔÀÓ ¿ÀºêÁ§Æ®µé
+	// ëœë¤í•˜ê²Œ ìƒì„±ëœ ëª¨ë“  ê²Œì„ ì˜¤ë¸Œì íŠ¸ë“¤
 	for (auto it = _GameEngine.GoBegin(); it != _GameEngine.GoEnd(); ++it)
 	{
 		GameObject& gameObject = *it->get();
@@ -103,11 +103,11 @@ void SoftRenderer::Render2D()
 		size_t indexCount = mesh._Indices.size();
 		size_t triangleCount = indexCount / 3;
 
-		// ¿ÀºêÁ§Æ®ÀÇ ¿ø ¹Ù¿îµù º¼·ı
+		// ì˜¤ë¸Œì íŠ¸ì˜ ì› ë°”ìš´ë”© ë³¼ë¥¨
 		Circle goCircleBound(mesh.GetCircleBound());
 		CK::Rectangle goRectangleBound(mesh.GetRectangleBound());
 
-		// ¸Ş½ÃÀÇ ¹Ù¿îµù º¼·ı Á¤º¸¸¦ °¡Á®¿Í¼­ ºä ÁÂÇ¥°è·Î º¯È¯ÇØ ºñ±³ÇÏ±â ( ½ºÄÉÀÏµµ °í·ÁÇØ Á÷Á¢ ±¸ÇöÇÒ °Í. )
+		// ë©”ì‹œì˜ ë°”ìš´ë”© ë³¼ë¥¨ ì •ë³´ë¥¼ ê°€ì ¸ì™€ì„œ ë·° ì¢Œí‘œê³„ë¡œ ë³€í™˜í•´ ë¹„êµí•˜ê¸° ( ìŠ¤ì¼€ì¼ë„ ê³ ë ¤í•´ ì§ì ‘ êµ¬í˜„í•  ê²ƒ. )
 		goCircleBound.Center = viewMat * goCircleBound.Center + transform.GetPosition();
 		goCircleBound.Radius *= transform.GetScale().Size();
 
@@ -115,13 +115,13 @@ void SoftRenderer::Render2D()
 		goRectangleBound.Max += transform.GetPosition() + transform.GetScale();
 
 
-		// µÎ ¹Ù¿îµù º¼·ıÀÌ °ãÄ¡Áö ¾ÊÀ¸¸é ±×¸®±â¿¡¼­ Á¦¿Ü
+		// ë‘ ë°”ìš´ë”© ë³¼ë¥¨ì´ ê²¹ì¹˜ì§€ ì•Šìœ¼ë©´ ê·¸ë¦¬ê¸°ì—ì„œ ì œì™¸
 		if (!cameraCircleBound.Intersect(goCircleBound))
 		{
 			culledObjectCount++;
 			continue;
 		}
-
+		// ì‚¬ê° ì˜ì—­ 
 		if (!cameraRectangleBound.Intersect(goRectangleBound))
 		{
 			culledObjectCountRect++;
@@ -130,19 +130,19 @@ void SoftRenderer::Render2D()
 
 		renderingObjectCount++;
 
-		// ·»´õ·¯°¡ »ç¿ëÇÒ Á¤Á¡ ¹öÆÛ¿Í ÀÎµ¦½º ¹öÆÛ »ı¼º
+		// ë Œë”ëŸ¬ê°€ ì‚¬ìš©í•  ì •ì  ë²„í¼ì™€ ì¸ë±ìŠ¤ ë²„í¼ ìƒì„±
 		Vector2* vertices = new Vector2[vertexCount];
 		std::memcpy(vertices, &mesh._Vertices[0], sizeof(Vector2) * vertexCount);
 		int* indices = new int[indexCount];
 		std::memcpy(indices, &mesh._Indices[0], sizeof(int) * indexCount);
 
-		// °¢ Á¤Á¡¿¡ Çà·ÄÀ» Àû¿ë
+		// ê° ì •ì ì— í–‰ë ¬ì„ ì ìš©
 		for (int vi = 0; vi < vertexCount; ++vi)
 		{
 			vertices[vi] = finalMat * vertices[vi];
 		}
 
-		// º¯È¯µÈ Á¤Á¡À» ÀÕ´Â ¼± ±×¸®±â
+		// ë³€í™˜ëœ ì •ì ì„ ì‡ëŠ” ì„  ê·¸ë¦¬ê¸°
 		for (int ti = 0; ti < triangleCount; ++ti)
 		{
 			int bi = ti * 3;
