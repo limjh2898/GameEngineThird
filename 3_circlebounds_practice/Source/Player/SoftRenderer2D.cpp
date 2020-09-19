@@ -88,9 +88,6 @@ void SoftRenderer::Render2D()
 	Circle cameraCircleBound(_GameEngine.GetCamera().GetCircleBound());
 	CK::Rectangle cameraRectangleBound(_GameEngine.GetCamera().GetRectangleBound());
 
-	// 의도적으로 짧게 설정
-	//cameraCircleBound.Radius = 250.f;
-
 	// 랜덤하게 생성된 모든 게임 오브젝트들
 	for (auto it = _GameEngine.GoBegin(); it != _GameEngine.GoEnd(); ++it)
 	{
@@ -109,7 +106,7 @@ void SoftRenderer::Render2D()
 
 		// 메시의 바운딩 볼륨 정보를 가져와서 뷰 좌표계로 변환해 비교하기 ( 스케일도 고려해 직접 구현할 것. )
 		goCircleBound.Center = viewMat * goCircleBound.Center + transform.GetPosition();
-		goCircleBound.Radius *= transform.GetScale().Size();
+		goCircleBound.Radius *= transform.GetScale().Max();
 
 		goRectangleBound.Min += transform.GetPosition() - transform.GetScale();
 		goRectangleBound.Max += transform.GetPosition() + transform.GetScale();
