@@ -108,10 +108,12 @@ void SoftRenderer::Render2D()
 		goCircleBound.Center = viewMat * goCircleBound.Center + transform.GetPosition();
 		goCircleBound.Radius *= transform.GetScale().Max();
 
-		goRectangleBound.Min += transform.GetPosition() - transform.GetScale();
-		goRectangleBound.Max += transform.GetPosition() + transform.GetScale();
+		//goRectangleBound.Min += transform.GetPosition() - transform.GetScale();
+		//goRectangleBound.Max += transform.GetPosition() + transform.GetScale();
 
-
+		goRectangleBound.Min += viewMat * goRectangleBound.Min + transform.GetPosition() - transform.GetScale();
+		goRectangleBound.Max += viewMat * goRectangleBound.Max + transform.GetPosition() + transform.GetScale();
+		
 		// 두 바운딩 볼륨이 겹치지 않으면 그리기에서 제외
 		if (!cameraCircleBound.Intersect(goCircleBound))
 		{
