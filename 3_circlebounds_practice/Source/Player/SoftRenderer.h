@@ -1,5 +1,5 @@
 #pragma once
-
+#include <chrono>
 class SoftRenderer
 {
 public:
@@ -47,6 +47,8 @@ private:
 	void Render2D();
 	void DrawGrid2D();
 
+	void DrawRectangle(CK::Rectangle& rect, CK::LinearColor color = CK::LinearColor::Gray);
+
 	int _Grid2DUnit = 10;
 
 private:
@@ -75,4 +77,9 @@ private:
 
 	// 게임 엔진
 	DD::GameEngine _GameEngine;
+
+	std::chrono::steady_clock::time_point startPoint, endPoint;
+
+	int curCount = 0;
+	float dynamicRefreshTime[100] = { 0.0f , };
 };

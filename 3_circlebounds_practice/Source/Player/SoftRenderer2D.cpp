@@ -1,23 +1,27 @@
 
 #include "Precompiled.h"
 #include "SoftRenderer.h"
+
+#include <sstream>
+#include <iomanip>
+
 using namespace CK::DD;
 
-// ê·¸ë¦¬ë“œ ê·¸ë¦¬ê¸°
+// ±×¸®µå ±×¸®±â
 void SoftRenderer::DrawGrid2D()
 {
-	// ê·¸ë¦¬ë“œ ìƒ‰ìƒ
+	// ±×¸®µå »ö»ó
 	LinearColor gridColor(LinearColor(0.8f, 0.8f, 0.8f, 0.3f));
 
-	// ë·°ì˜ ì˜ì—­ ê³„ì‚°
+	// ºäÀÇ ¿µ¿ª °è»ê
 	Vector2 viewPos = _GameEngine.GetCamera().GetTransform().GetPosition();
 	Vector2 extent = Vector2(_ScreenSize.X * 0.5f, _ScreenSize.Y * 0.5f);
 
-	// ì¢Œì¸¡ í•˜ë‹¨ì—ì„œë¶€í„° ê²©ì ê·¸ë¦¬ê¸°
+	// ÁÂÃø ÇÏ´Ü¿¡¼­ºÎÅÍ °İÀÚ ±×¸®±â
 	int xGridCount = _ScreenSize.X / _Grid2DUnit;
 	int yGridCount = _ScreenSize.Y / _Grid2DUnit;
 
-	// ê·¸ë¦¬ë“œê°€ ì‹œì‘ë˜ëŠ” ì¢Œí•˜ë‹¨ ì¢Œí‘œ ê°’ ê³„ì‚°
+	// ±×¸®µå°¡ ½ÃÀÛµÇ´Â ÁÂÇÏ´Ü ÁÂÇ¥ °ª °è»ê
 	Vector2 minPos = viewPos - extent;
 	Vector2 minGridPos = Vector2(ceilf(minPos.X / (float)_Grid2DUnit), ceilf(minPos.Y / (float)_Grid2DUnit)) * (float)_Grid2DUnit;
 	ScreenPoint gridBottomLeft = ScreenPoint::ToScreenCoordinate(_ScreenSize, minGridPos - viewPos);
@@ -32,25 +36,52 @@ void SoftRenderer::DrawGrid2D()
 		_RSI->DrawFullHorizontalLine(gridBottomLeft.Y - iy * _Grid2DUnit, gridColor);
 	}
 
-	// ì›”ë“œì˜ ì›ì 
+	// ¿ùµåÀÇ ¿øÁ¡
 	ScreenPoint worldOrigin = ScreenPoint::ToScreenCoordinate(_ScreenSize, -viewPos);
 	_RSI->DrawFullHorizontalLine(worldOrigin.Y, LinearColor::Red);
 	_RSI->DrawFullVerticalLine(worldOrigin.X, LinearColor::Green);
 }
 
+void SoftRenderer::DrawRectangle(CK::Rectangle& rect, CK::LinearColor color)
+{
+	_RSI->DrawLine(rect.Min, Vector2(rect.Min.X, rect.Max.Y), color);
+	_RSI->DrawLine(Vector2(rect.Min.X, rect.Max.Y), rect.Max, color);
+	_RSI->DrawLine(rect.Max, Vector2(rect.Max.X, rect.Min.Y), color);
+	_RSI->DrawLine(Vector2(rect.Max.X, rect.Min.Y), rect.Min, color);
+}
+#include <chrono>
 
-// ê²Œì„ ë¡œì§
+// °ÔÀÓ ·ÎÁ÷
 void SoftRenderer::Update2D(float InDeltaSeconds)
 {
+
+	_GameEngine.GetTree().DynamicObjectTreeUpdate();
+	//startPoint = std::chrono::high_resolution_clock::now();
+
+	//_GameEngine.GetTree().Clear();
+
+	//for (auto it = _GameEngine.GoBegin(); it != _GameEngine.GoEnd(); ++it)
+	//{
+	//	_GameEngine.GetTree().Insert(it->get());
+	//}
+
+	//if (curCount >= 100)
+	//	curCount = 0;
+
+	//endPoint = std::chrono::high_resolution_clock::now();
+
+	//dynamicRefreshTime[curCount] = std::chrono::duration_cast<std::chrono::nanoseconds>(endPoint - startPoint).count();
+	//curCount++;
+
 	static float moveSpeed = 100.f;
 
-	InputManager input = _GameEngine.GetInputManager();
+ 	InputManager input = _GameEngine.GetInputManager();
 
-	// í”Œë ˆì´ì–´ ê²Œì„ ì˜¤ë¸Œì íŠ¸ì˜ íŠ¸ëœìŠ¤í¼
+	// ÇÃ·¹ÀÌ¾î °ÔÀÓ ¿ÀºêÁ§Æ®ÀÇ Æ®·£½ºÆû
 	Transform& playerTransform = _GameEngine.FindGameObject(GameEngine::PlayerKey).GetTransform();
 	playerTransform.AddPosition(Vector2(input.GetXAxis(), input.GetYAxis()) * moveSpeed * InDeltaSeconds);
 
-	// í”Œë ˆì´ì–´ë¥¼ ë”°ë¼ë‹¤ë‹ˆëŠ” ì¹´ë©”ë¼ì˜ íŠ¸ëœìŠ¤í¼
+	// ÇÃ·¹ÀÌ¾î¸¦ µû¶ó´Ù´Ï´Â Ä«¸Ş¶óÀÇ Æ®·£½ºÆû
 	static float thresholdDistance = 1.f;
 	Transform& cameraTransform = _GameEngine.GetCamera().GetTransform();
 	Vector2 playerPosition = playerTransform.GetPosition();
@@ -67,31 +98,63 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 		Vector2 newCameraPosition = prevCameraPosition + (playerPosition - prevCameraPosition) * ratio;
 		cameraTransform.SetPosition(newCameraPosition);
 	}
+
+	Transform& enemyTransform = _GameEngine.FindGameObject("Enemy").GetTransform();
+	enemyTransform.SetPosition(Vector2::MoveTowards(enemyTransform.GetPosition(), playerTransform.GetPosition(), 50.0f * InDeltaSeconds));
 }
 
-// ë Œë”ë§ ë¡œì§
+// ·»´õ¸µ ·ÎÁ÷
 void SoftRenderer::Render2D()
 {
-	// ê²©ì ê·¸ë¦¬ê¸°
-	DrawGrid2D();
+	// °İÀÚ ±×¸®±â
+	//DrawGrid2D();
 
-	// ì¹´ë©”ë¼ì˜ ë·° í–‰ë ¬
+	// Ä«¸Ş¶óÀÇ ºä Çà·Ä
 	Matrix3x3 viewMat = _GameEngine.GetCamera().GetViewMatrix();
-
-	// ì „ì²´ ê·¸ë¦´ ë¬¼ì²´ì˜ ìˆ˜
+	// ÀüÃ¼ ±×¸± ¹°Ã¼ÀÇ ¼ö
 	size_t totalObjectCount = _GameEngine.GetGameObject().size();
 	size_t culledObjectCount = 0;
 	size_t culledObjectCountRect = 0;
 	size_t renderingObjectCount = 0;
 
-	// ì¹´ë©”ë¼ì˜ í˜„ì¬ ì› ë°”ìš´ë”©
+	// Ä«¸Ş¶óÀÇ ÇöÀç ¿ø ¹Ù¿îµù
 	Circle cameraCircleBound(_GameEngine.GetCamera().GetCircleBound());
-	CK::Rectangle cameraRectangleBound(_GameEngine.GetCamera().GetRectangleBound());
+	//CK::Rectangle cameraRectangleBound(_GameEngine.GetCamera().GetRectangleBound());
+	Vector2 temp(Vector2::One * 200.0f);
+	CK::Rectangle cameraRectangleBound(-temp, temp);
+	DrawRectangle(cameraRectangleBound, CK::LinearColor::Magenta);
 
-	// ëœë¤í•˜ê²Œ ìƒì„±ëœ ëª¨ë“  ê²Œì„ ì˜¤ë¸Œì íŠ¸ë“¤
-	for (auto it = _GameEngine.GoBegin(); it != _GameEngine.GoEnd(); ++it)
+
+	auto qts = _GameEngine.GetTree().nodes;
+	Transform& playerTransform = _GameEngine.FindGameObject(GameEngine::PlayerKey).GetTransform();
+
+	for (auto& it : qts)
 	{
-		GameObject& gameObject = *it->get();
+		CK::Rectangle rect = it->bound;
+		rect.Max = viewMat * rect.Max;
+		rect.Min = viewMat * rect.Min;
+		DrawRectangle(rect, CK::LinearColor(CK::Color32(190, 190, 190,1)));
+	}
+	auto dd = _GameEngine.GetTree().mDynamicObjects;
+	for (auto& it : dd)
+	{
+		CK::Rectangle rect = it.node->bound;
+		rect.Max = viewMat * rect.Max;
+		rect.Min = viewMat * rect.Min;
+		DrawRectangle(rect, CK::LinearColor::Red);
+	}
+
+
+	std::vector<GameObject*> renderObjects;
+	auto camPosition = _GameEngine.GetCamera().GetTransform().GetPosition();
+	cameraRectangleBound.Min = (cameraRectangleBound.Min) + camPosition;
+	cameraRectangleBound.Max = (cameraRectangleBound.Max) + camPosition;
+	_GameEngine.GetTree().GetVerificationObjects(cameraRectangleBound, renderObjects);
+
+	// ·£´ıÇÏ°Ô »ı¼ºµÈ ¸ğµç °ÔÀÓ ¿ÀºêÁ§Æ®µé
+	for (auto it = renderObjects.begin(); it != renderObjects.end(); ++it)
+	{
+		GameObject& gameObject = *(*it);
 		const Mesh& mesh = _GameEngine.GetMesh(gameObject.GetMeshKey());
 		Transform& transform = gameObject.GetTransform();
 		Matrix3x3 finalMat = viewMat * transform.GetModelingMatrix();
@@ -100,48 +163,21 @@ void SoftRenderer::Render2D()
 		size_t indexCount = mesh._Indices.size();
 		size_t triangleCount = indexCount / 3;
 
-		// ì˜¤ë¸Œì íŠ¸ì˜ ì› ë°”ìš´ë”© ë³¼ë¥¨
-		Circle goCircleBound(mesh.GetCircleBound());
-		CK::Rectangle goRectangleBound(mesh.GetRectangleBound());
-
-		// ë©”ì‹œì˜ ë°”ìš´ë”© ë³¼ë¥¨ ì •ë³´ë¥¼ ê°€ì ¸ì™€ì„œ ë·° ì¢Œí‘œê³„ë¡œ ë³€í™˜í•´ ë¹„êµí•˜ê¸° ( ìŠ¤ì¼€ì¼ë„ ê³ ë ¤í•´ ì§ì ‘ êµ¬í˜„í•  ê²ƒ. )
-		goCircleBound.Center = viewMat * goCircleBound.Center + transform.GetPosition();
-		goCircleBound.Radius *= transform.GetScale().Max();
-
-		//goRectangleBound.Min += transform.GetPosition() - transform.GetScale();
-		//goRectangleBound.Max += transform.GetPosition() + transform.GetScale();
-
-		goRectangleBound.Min += viewMat * goRectangleBound.Min + transform.GetPosition() - transform.GetScale();
-		goRectangleBound.Max += viewMat * goRectangleBound.Max + transform.GetPosition() + transform.GetScale();
-		
-		// ë‘ ë°”ìš´ë”© ë³¼ë¥¨ì´ ê²¹ì¹˜ì§€ ì•Šìœ¼ë©´ ê·¸ë¦¬ê¸°ì—ì„œ ì œì™¸
-		if (!cameraCircleBound.Intersect(goCircleBound))
-		{
-			culledObjectCount++;
-			continue;
-		}
-		// ì‚¬ê° ì˜ì—­ 
-		if (!cameraRectangleBound.Intersect(goRectangleBound))
-		{
-			culledObjectCountRect++;
-			continue;
-		}
-
 		renderingObjectCount++;
 
-		// ë Œë”ëŸ¬ê°€ ì‚¬ìš©í•  ì •ì  ë²„í¼ì™€ ì¸ë±ìŠ¤ ë²„í¼ ìƒì„±
+		// ·»´õ·¯°¡ »ç¿ëÇÒ Á¤Á¡ ¹öÆÛ¿Í ÀÎµ¦½º ¹öÆÛ »ı¼º
 		Vector2* vertices = new Vector2[vertexCount];
 		std::memcpy(vertices, &mesh._Vertices[0], sizeof(Vector2) * vertexCount);
 		int* indices = new int[indexCount];
 		std::memcpy(indices, &mesh._Indices[0], sizeof(int) * indexCount);
 
-		// ê° ì •ì ì— í–‰ë ¬ì„ ì ìš©
+		// °¢ Á¤Á¡¿¡ Çà·ÄÀ» Àû¿ë
 		for (int vi = 0; vi < vertexCount; ++vi)
 		{
 			vertices[vi] = finalMat * vertices[vi];
 		}
 
-		// ë³€í™˜ëœ ì •ì ì„ ì‡ëŠ” ì„  ê·¸ë¦¬ê¸°
+		// º¯È¯µÈ Á¤Á¡À» ÀÕ´Â ¼± ±×¸®±â
 		for (int ti = 0; ti < triangleCount; ++ti)
 		{
 			int bi = ti * 3;
@@ -155,8 +191,20 @@ void SoftRenderer::Render2D()
 	}
 
 	_RSI->PushStatisticText("Total Objects : " + std::to_string(totalObjectCount));
-	_RSI->PushStatisticText("Culled by Circle : " + std::to_string(culledObjectCount));
-	_RSI->PushStatisticText("Culled by Rectangle : " + std::to_string(culledObjectCountRect));
-	_RSI->PushStatisticText("Rendering Objects : " + std::to_string(renderingObjectCount));
+	_RSI->PushStatisticText("Culled by Quad Tree : " + std::to_string(totalObjectCount - renderObjects.size()));
+	_RSI->PushStatisticText("Rendering Objects : " + std::to_string(renderObjects.size()));
+	_RSI->PushStatisticText("Total Tree Node Count : " + std::to_string(qts.size()));
+
+
+	float sum = 0.0f;
+	for (int i = 0; i < 100; i++)
+	{
+		sum += dynamicRefreshTime[i];
+	}
+
+	std::ostringstream out;
+	//out << std::setprecision(0) << sum / 100.0f;//_GameEngine.GetTree().GetDynamicRefreshTime();
+	out << std::setprecision(0) << _GameEngine.GetTree().GetDynamicRefreshTime();
+	_RSI->PushStatisticText("Dynamic Refresh Time : " + out.str() + "ns");
 }
 

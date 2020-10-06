@@ -35,6 +35,8 @@ public:
 
 	// 메시
 	const DD::Mesh& GetMesh(const std::string& InMeshKey) { return *_Meshes[InMeshKey].get(); }
+	
+	QuadTree& GetTree() { return *quadTree.get(); }
 
 	// 카메라 
 	DD::Camera& GetCamera() { return *_Camera.get(); }
@@ -48,6 +50,8 @@ private:
 	std::vector<std::unique_ptr<DD::GameObject>> _GameObjects;
 	std::unordered_map<std::string, std::unique_ptr<DD::Mesh>> _Meshes;
 	std::unique_ptr<DD::Camera> _Camera;
+
+	std::unique_ptr <QuadTree> quadTree;
 };
 
 }

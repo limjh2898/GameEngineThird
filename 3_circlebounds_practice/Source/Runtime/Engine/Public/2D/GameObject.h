@@ -9,7 +9,7 @@ class GameObject
 {
 public:
 	GameObject() = default;
-	GameObject(const std::string& InName) : _Name(InName)
+	GameObject(const std::string& InName) : _Name(InName), _IsStatic(false)
 	{
 		_Hash = std::hash<std::string>()(_Name);
 	}
@@ -33,12 +33,16 @@ public:
 	const std::string& GetName() const { return _Name; }
 	std::size_t GetHash() { return _Hash; }
 
+	void SetStatic() { _IsStatic = true; }
+	bool IsStatic() { return _IsStatic; }
+
 private:
 	std::size_t _Hash = 0;
 	std::string _Name;
 	std::string _MeshKey;
 	Transform _Transform;
 	LinearColor _Color = LinearColor::Error;
+	bool _IsStatic;
 };
 
 }

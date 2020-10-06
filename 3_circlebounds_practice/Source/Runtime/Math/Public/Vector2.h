@@ -32,6 +32,18 @@ public:
 	FORCEINLINE float Max() const;
 	FORCEINLINE float Dot(const Vector2& InVector) const;
 
+	static Vector2 MoveTowards(Vector2 current, Vector2 target, float maxDistanceDelta)
+	{
+		Vector2 a = target - current;
+		float ma = a.Size();
+		if (ma <= maxDistanceDelta || ma == 0.0f)
+		{
+			return target;
+		}
+
+		return current + a / ma * maxDistanceDelta;
+	}
+
 	std::string ToString() const;
 
 	// 정적멤버변수 

@@ -7,6 +7,7 @@
 #include "2D/Transform.h"
 #include "2D/GameObject.h"
 #include "2D/Camera.h"
+#include "QuadTree.h"
 #include "2D/GameEngine.h"
 
 using namespace CK;

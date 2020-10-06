@@ -92,6 +92,8 @@ bool GameEngine::LoadResources()
 bool GameEngine::LoadScene()
 {
 	static float squareScale = 10.f;
+	auto size = Vector2::One * 1400;
+	quadTree = std::make_unique<QuadTree>(this, Rectangle(-size, size), 8);
 
 	auto player = std::make_unique<DD::GameObject>(GameEngine::PlayerKey);
 	player->SetMesh(GameEngine::QuadMeshKey);
@@ -99,14 +101,22 @@ bool GameEngine::LoadScene()
 	player->SetColor(LinearColor::Blue);
 
 	_GameObjects.push_back(std::move(player));
+
 	_Camera = std::make_unique<DD::Camera>();
 	_Camera->SetCameraViewSize(_ViewportSize);
 
-	std::mt19937 generator(0);
-	std::uniform_real_distribution<float> dist(-500.f, 500.f);
+	auto enemy = std::make_unique<DD::GameObject>("Enemy");
+	enemy->SetMesh(GameEngine::QuadMeshKey);
+	enemy->GetTransform().SetScale(Vector2::One * 20);
+	enemy->SetColor(LinearColor(CK::Color32(18,79,0,1)));
 
-	// 100개의 배경 게임 오브젝트 생성
-	for (int i = 0; i < 100; ++i)
+	_GameObjects.push_back(std::move(enemy));
+
+	std::mt19937 generator(0);
+	std::uniform_real_distribution<float> dist(-800.f, 800.f);
+
+	// 200개의 배경 게임 오브젝트 생성
+	for (int i = 0; i < 200; ++i)
 	{
 		char name[64];
 		std::snprintf(name, sizeof(name), "GameObject%d", i);
@@ -114,10 +124,17 @@ bool GameEngine::LoadScene()
 		newGo->GetTransform().SetPosition(Vector2(dist(generator), dist(generator)));
 		newGo->GetTransform().SetScale(Vector2::One * squareScale);
 		newGo->SetMesh(GameEngine::QuadMeshKey);
+		newGo->SetStatic();
 		if (!InsertGameObject(std::move(newGo)))
 		{
 			return false;
 		}
+	}
+
+	// 쿼드 트리에 넣기
+	for (auto& it : _GameObjects)
+	{
+		quadTree->Insert(it.get());
 	}
 
 	return true;
